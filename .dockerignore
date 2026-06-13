@@ -1,0 +1,12 @@
+.env
+.env.example
+firebase-adminsdk.json
+venv/
+.git/
+.gitignore
+.gemini/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store

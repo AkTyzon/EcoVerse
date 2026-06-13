@@ -1,0 +1,21 @@
+# EcoVerse gitignore configuration
+
+# Environment variables containing sensitive API keys
+.env
+firebase-adminsdk.json
+
+# Python Virtual Environments
+venv/
+env/
+ENV/
+.venv/
+
+# Python caching
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Operating system files
+.DS_Store
+Thumbs.db

@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoVerse - A Multiplayer Sustainability World</title>
+    <!-- Google Fonts: Outfit (headings) and Inter (body) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- HEADER: Logo and Global Player Stats -->
+        <header class="app-header">
+            <div class="logo-area">
+                <div class="logo-icon"><i class="fa-solid fa-leaf-maple"></i></div>
+                <h1>EcoVerse</h1>
+                <span class="badge-beta">Beta</span>
+            </div>
+            
+            <div class="stats-bar">
+                <div class="stat-badge" id="stat-energy" title="Green Energy - Earned by logging real-world green actions. Used to upgrade your island.">
+                    <i class="fa-solid fa-bolt energy-icon"></i>
+                    <div class="stat-details">
+                        <span class="stat-label">Green Energy</span>
+                        <span class="stat-value" id="val-energy">0</span>
+                    </div>
+                </div>
+                <div class="stat-badge" id="stat-points" title="Nature Points - Cumulative score showing your total eco impact. used in leaderboard rankings.">
+                    <i class="fa-solid fa-seedling points-icon"></i>
+                    <div class="stat-details">
+                        <span class="stat-label">Nature Points</span>
+                        <span class="stat-value" id="val-points">0</span>
+                    </div>
+                </div>
+                <div class="stat-badge" id="stat-streak" title="Daily Streak - Log actions daily to keep your streak multiplier active!">
+                    <i class="fa-solid fa-fire streak-icon"></i>
+                    <div class="stat-details">
+                        <span class="stat-label">Streak</span>
+                        <span class="stat-value" id="val-streak">0 days</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- User Profile Section -->
+            <div class="user-profile-widget" id="user-profile-widget" style="display: flex; gap: 0.5rem; align-items: center;">
+                <button class="btn-connect-profile" id="btn-connect-profile" onclick="openAuthModal()">
+                    <i class="fa-solid fa-user-plus"></i> Connect Profile
+                </button>
+                <div class="profile-details-pill" id="profile-details-pill" style="display: none;">
+                    <div class="profile-avatar-mini" id="profile-avatar-mini"><i class="fa-solid fa-user-circle"></i></div>
+                    <div class="profile-meta-mini">
+                        <span class="profile-name-mini" id="profile-name-mini">Guest Builder</span>
+                        <span class="profile-limits-mini" id="profile-limits-mini">AI: 5/5 remaining</span>
+                    </div>
+                    <button class="btn-signout-mini" id="btn-signout-mini" onclick="handleSignOut()" title="Sign Out">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+                <!-- Developer Settings Button -->
+                <button class="btn-settings-mini" id="btn-settings-mini" onclick="openSettingsModal()" title="Developer Settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span class="settings-key-badge" id="settings-key-badge" style="display: none;"></span>
+                </button>
+            </div>
+        </header>
+
+        <!-- MAIN LAYOUT: Split View -->
+        <main class="app-main">
+            <!-- LEFT COLUMN: The Visual World Simulator -->
+            <section class="viewport-section">
+                <div class="island-viewport" id="island-viewport">
+                    <!-- Dynamic Sky, Clouds, Smog, Water, Land, and Plants are rendered here via SVGs and CSS -->
+                    <div class="weather-effects" id="weather-effects"></div>
+                    <div class="sky-glow" id="sky-glow"></div>
+                    
+                    <!-- SVG Island container -->
+                    <div class="svg-world-container" id="svg-world-container">
+                        <!-- Loaded dynamically via app.js -->
+                    </div>
+
+                    <!-- Overlay showing environmental feedback -->
+                    <div class="aura-tag" id="aura-tag">
+                        <span class="aura-dot"></span>
+                        <span id="aura-text">Emerald Aura</span>
+                    </div>
+
+                    <!-- Floating Upgrades Overlay (Shows trees/solar stats on current island) -->
+                    <div class="island-stats-overlay">
+                        <div class="stats-row"><i class="fa-solid fa-tree"></i> <span id="overlay-trees">5 Trees</span></div>
+                        <div class="stats-row"><i class="fa-solid fa-solar-panel"></i> <span id="overlay-solar">1 Solar Grid</span></div>
+                        <div class="stats-row"><i class="fa-solid fa-water"></i> <span id="overlay-water">Clean</span></div>
+                    </div>
+                </div>
+
+                <!-- Demo State Controller for Judges (Instant Visual Changes) -->
+                <div class="demo-controller-card">
+                    <div class="demo-controller-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+                        <div>
+                            <h4><i class="fa-solid fa-sliders"></i> Judges Demo Controller</h4>
+                            <p>Simulate emission levels and toggle AI modes globally.</p>
+                        </div>
+                        <div class="bill-mode-toggle" style="margin-left: 1rem; flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem;">
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="toggle-label" id="global-toggle-label" style="font-weight: 700; font-size: 0.7rem;">Demo Mode</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="global-mode-checkbox">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <span class="ai-limit-badge" id="ai-limit-badge" style="display: none; font-size: 0.65rem; color: var(--accent-emerald); opacity: 0.85;">AI: 5/5 remaining</span>
+                        </div>
+                    </div>
+                    <div class="demo-buttons">
+                        <button class="demo-btn active" data-level="very_low" style="background: linear-gradient(135deg, #11998e, #38ef7d);">
+                            <span>Very Low</span>
+                            <small>Emerald</small>
+                        </button>
+                        <button class="demo-btn" data-level="low" style="background: linear-gradient(135deg, #2193b0, #6dd5ed);">
+                            <span>Low</span>
+                            <small>Blue Sky</small>
+                        </button>
+                        <button class="demo-btn" data-level="average" style="background: linear-gradient(135deg, #f857a6, #ff5858);">
+                            <span>Average</span>
+                            <small>Orange</small>
+                        </button>
+                        <button class="demo-btn" data-level="high" style="background: linear-gradient(135deg, #e65c00, #F9D423);">
+                            <span>High</span>
+                            <small>Smoggy</small>
+                        </button>
+                        <button class="demo-btn" data-level="very_high" style="background: linear-gradient(135deg, #870000, #190a05);">
+                            <span>Very High</span>
+                            <small>Toxic Red</small>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- RIGHT COLUMN: Dashboard & Tabs Navigation -->
+            <section class="dashboard-section">
+                <!-- Navigation Tabs -->
+                <nav class="dashboard-tabs">
+                    <button class="tab-btn active" data-tab="eco-city" id="tab-eco-city">
+                        <i class="fa-solid fa-island-tropical"></i><span>My EcoCity</span>
+                    </button>
+                    <button class="tab-btn" data-tab="tribes" id="tab-tribes">
+                        <i class="fa-solid fa-users-rays"></i><span>Eco Tribes</span>
+                    </button>
+                    <button class="tab-btn" data-tab="global-planet" id="tab-global-planet">
+                        <i class="fa-solid fa-earth-americas"></i><span>Community Planet</span>
+                    </button>
+                    <button class="tab-btn" data-tab="ai-companion" id="tab-ai-companion">
+                        <i class="fa-solid fa-sparkles"></i><span>AI Companion</span>
+                    </button>
+                    <button class="tab-btn" data-tab="carbon-battle" id="tab-carbon-battle">
+                        <i class="fa-solid fa-sword"></i><span>Carbon Battle</span>
+                    </button>
+                </nav>
+
+                <!-- TAB CONTENTS -->
+                <div class="tab-viewport">
+                    
+                    <!-- TAB 1: MY ECO CITY (Logging & Upgrades) -->
+                    <div class="tab-content active" id="content-eco-city">
+                        <div class="content-header">
+                            <h3>🏝️ Manage Your EcoCity</h3>
+                            <p>Spend Green Energy resources to upgrade your island, and log daily eco actions to earn more.</p>
+                        </div>
+                        
+                        <div class="dashboard-grid">
+                            <!-- Section A: Spend Energy to Upgrade Island -->
+                            <div class="glass-card upgrades-panel">
+                                <h4><i class="fa-solid fa-arrow-up-from-arc"></i> Upgrade Ecosystem</h4>
+                                <div class="upgrade-items">
+                                    <div class="upgrade-card" id="upg-tree">
+                                        <div class="upgrade-info">
+                                            <i class="fa-solid fa-tree item-icon"></i>
+                                            <div>
+                                                <h5>Plant Conifer Tree</h5>
+                                                <p>Adds a lush tree. Lowers carbon score.</p>
+                                            </div>
+                                        </div>
+                                        <button class="btn-upgrade" onclick="buyUpgrade('tree', 30)">
+                                            <span>30 ⚡</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="upgrade-card" id="upg-solar">
+                                        <div class="upgrade-info">
+                                            <i class="fa-solid fa-solar-panel item-icon"></i>
+                                            <div>
+                                                <h5>Install Solar Grid</h5>
+                                                <p>Generates clean power. Replaces barren spots.</p>
+                                            </div>
+                                        </div>
+                                        <button class="btn-upgrade" onclick="buyUpgrade('solar', 60)">
+                                            <span>60 ⚡</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="upgrade-card" id="upg-river">
+                                        <div class="upgrade-info">
+                                            <i class="fa-solid fa-filter item-icon"></i>
+                                            <div>
+                                                <h5>Clean River Bio-Filters</h5>
+                                                <p>Removes toxic waste, clarifying the stream.</p>
+                                            </div>
+                                        </div>
+                                        <button class="btn-upgrade" onclick="buyUpgrade('river', 80)">
+                                            <span>80 ⚡</span>
+                                        </button>
+                                    </div>
+
+                                    <div class="upgrade-card" id="upg-wildlife">
+                                        <div class="upgrade-info">
+                                            <i class="fa-solid fa-paw item-icon"></i>
+                                            <div>
+                                                <h5>Introduce Forest Wildlife</h5>
+                                                <p>Spawns animated forest creatures.</p>
+                                            </div>
+                                        </div>
+                                        <button class="btn-upgrade" onclick="buyUpgrade('wildlife', 100)">
+                                            <span>100 ⚡</span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Section B: Log Real-world Actions -->
+                            <div class="glass-card logging-panel">
+                                <h4><i class="fa-solid fa-clipboard-check"></i> Log Green Actions</h4>
+                                <div class="log-actions-list">
+                                    
+                                    <!-- Transport action -->
+                                    <div class="log-row">
+                                        <div class="log-label">
+                                            <i class="fa-solid fa-bicycle"></i>
+                                            <div>
+                                                <h5>Green Transport</h5>
+                                                <p>Walked, cycled, or took public transit.</p>
+                                            </div>
+                                        </div>
+                                        <div class="log-inputs">
+                                            <input type="number" id="input-commute-km" placeholder="km" min="1" max="100">
+                                            <button class="btn-log" onclick="logAction('commute')">Log</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Diet action -->
+                                    <div class="log-row">
+                                        <div class="log-label">
+                                            <i class="fa-solid fa-carrot"></i>
+                                            <div>
+                                                <h5>Vegetarian Meal</h5>
+                                                <p>Avoided meat consumption today.</p>
+                                            </div>
+                                        </div>
+                                        <div class="log-inputs">
+                                            <button class="btn-log btn-full" onclick="logAction('meal')">Eat Green (+25 ⚡)</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Recycling action -->
+                                    <div class="log-row">
+                                        <div class="log-label">
+                                            <i class="fa-solid fa-recycle"></i>
+                                            <div>
+                                                <h5>Recycling & Compost</h5>
+                                                <p>Sorted waste or composted organic scrap.</p>
+                                            </div>
+                                        </div>
+                                        <div class="log-inputs">
+                                            <button class="btn-log btn-full" onclick="logAction('recycle')">Recycle (+20 ⚡)</button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Utility Bill Upload (Cool Feature) -->
+                                    <div class="utility-bill-card">
+                                        <div class="bill-card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                            <h5><i class="fa-solid fa-file-invoice-dollar"></i> Upload Utility Bill</h5>
+                                            <span class="tab-limit-badge" id="bill-limit-badge" style="font-size: 0.7rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 0.15rem 0.5rem; border-radius: 4px; font-weight: 600;">AI: Unlimited (Demo)</span>
+                                        </div>
+                                        
+                                        <!-- Bill Type Segment Selector -->
+                                        <div class="bill-type-segment">
+                                            <button class="bill-type-btn active" data-type="electricity"><i class="fa-solid fa-bolt"></i> Electricity</button>
+                                            <button class="bill-type-btn" data-type="water"><i class="fa-solid fa-water"></i> Water</button>
+                                            <button class="bill-type-btn" data-type="gas"><i class="fa-solid fa-fire"></i> Gas</button>
+                                        </div>
+
+                                        <p>Upload your bill. Our AI extracts usage details to calculate exact carbon impact and reward you.</p>
+                                        <div class="bill-upload-area" id="bill-drop-zone">
+                                            <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
+                                            <span>Drag & Drop or Click to Upload Bill</span>
+                                            <input type="file" id="bill-file-input" style="display:none;" accept=".pdf,image/*">
+                                            <div class="upload-loader" id="upload-loader" style="display:none;">
+                                                <div class="spinner"></div>
+                                                <span>AI parsing bill details...</span>
+                                            </div>
+                                        </div>
+                                        <div class="bill-results" id="bill-results" style="display:none;">
+                                            <!-- Parsed results filled in app.js -->
+                                        </div>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 2: ECO TRIBES (Clans) -->
+                    <div class="tab-content" id="content-tribes">
+                        <div class="content-header">
+                            <h3>👥 Eco Tribes</h3>
+                            <p>Collaborate with your clan members on weekly carbon-reduction goals and view their worlds.</p>
+                        </div>
+                        
+                        <div id="tribes-tab-container">
+                            <div class="tribes-layout">
+                                <div class="glass-card tribe-status-card">
+                                    <div class="tribe-meta">
+                                        <div class="tribe-badge"><i class="fa-solid fa-solar-panel"></i></div>
+                                        <div>
+                                            <h4>Solar Squad</h4>
+                                            <p>Rank #14 Globally &bull; 18 Active Members</p>
+                                        </div>
+                                    </div>
+    
+                                    <div class="tribe-goal-box">
+                                        <div class="goal-label-row">
+                                            <span>Weekly Goal: Reduce 1,000 kg CO₂</span>
+                                            <strong id="tribe-goal-pct">72% Completed</strong>
+                                        </div>
+                                        <div class="progress-track">
+                                            <div class="progress-fill" id="tribe-goal-bar" style="width: 72%;"></div>
+                                        </div>
+                                        <span class="goal-timer"><i class="fa-regular fa-clock"></i> 2 days, 9 hours remaining</span>
+                                    </div>
+    
+                                    <div class="tribe-members-list">
+                                        <h5>Tribe Members & Contributions</h5>
+                                        <div class="member-item">
+                                            <span class="member-name"><i class="fa-solid fa-user-crown"></i> Akshay (You)</span>
+                                            <div class="member-stats">
+                                                <span class="aura-indicator aura-very-low" title="Emerald Aura"></span>
+                                                <span>32 kg saved</span>
+                                            </div>
+                                        </div>
+                                        <div class="member-item clickable-member" onclick="visitFriend('Sarah', 'high')">
+                                            <span class="member-name"><i class="fa-solid fa-user"></i> Sarah <small class="visit-hint">Visit Island</small></span>
+                                            <div class="member-stats">
+                                                <span class="aura-indicator aura-high" title="Orange Smog Aura"></span>
+                                                <span>18 kg saved</span>
+                                            </div>
+                                        </div>
+                                        <div class="member-item clickable-member" onclick="visitFriend('David', 'low')">
+                                            <span class="member-name"><i class="fa-solid fa-user"></i> David <small class="visit-hint">Visit Island</small></span>
+                                            <div class="member-stats">
+                                                <span class="aura-indicator aura-low" title="Blue Sky Aura"></span>
+                                                <span>24 kg saved</span>
+                                            </div>
+                                        </div>
+                                        <div class="member-item clickable-member" onclick="visitFriend('Marcus', 'very_high')">
+                                            <span class="member-name"><i class="fa-solid fa-user"></i> Marcus <small class="visit-hint">Visit Island</small></span>
+                                            <div class="member-stats">
+                                                <span class="aura-indicator aura-very-high" title="Toxic Red Aura"></span>
+                                                <span>0 kg saved</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+    
+                                <div class="glass-card tribe-chat-card">
+                                    <h4><i class="fa-solid fa-comments"></i> Tribe Chat</h4>
+                                    <div class="chat-messages" id="tribe-chat-messages">
+                                        <!-- Filled dynamically -->
+                                    </div>
+                                    <div class="chat-input-area">
+                                        <input type="text" id="tribe-chat-input" placeholder="Type a message to your tribe...">
+                                        <button class="btn-chat-send" onclick="sendTribeMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 3: COMMUNITY PLANET -->
+                    <div class="tab-content" id="content-global-planet">
+                        <div class="content-header">
+                            <h3>🌍 Community Planet</h3>
+                            <p>Every single user's reductions contribute to restoring our shared community planet in real time.</p>
+                        </div>
+
+                        <div class="global-planet-container">
+                            <div class="glass-card global-health-card">
+                                <div class="health-gauge">
+                                    <div class="gauge-center">
+                                        <span class="health-label">Global Health</span>
+                                        <span class="health-pct" id="global-health-val">83.4%</span>
+                                    </div>
+                                </div>
+                                <div class="health-stats">
+                                    <div class="h-stat-box">
+                                        <span>Ice Caps Volume</span>
+                                        <strong>+1.2% this week</strong>
+                                    </div>
+                                    <div class="h-stat-box">
+                                        <span>Global Re-forested</span>
+                                        <strong id="global-reforested-val">12,492 Hectares</strong>
+                                    </div>
+                                    <div class="h-stat-box">
+                                        <span>Total Carbon Avoided</span>
+                                        <strong id="global-carbon-val">142.5 Metric Tons</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="glass-card global-events-card">
+                                <h4><i class="fa-solid fa-earth-oceania"></i> Earth Restoration Event</h4>
+                                <div class="event-details">
+                                    <span class="event-badge-active">ACTIVE EVENT</span>
+                                    <h5>Operation: Forest Rebirth</h5>
+                                    <p>Our community target is to plant 1 Million virtual trees this week. If completed, everyone in the game unlocks the rare "Bioluminescent Willow" landmark for their islands!</p>
+                                    
+                                    <div class="event-progress-box">
+                                        <div class="event-labels">
+                                            <span id="event-progress-text">Progress: 843,219 / 1,000,000 Trees</span>
+                                            <strong id="event-progress-pct">84.3%</strong>
+                                        </div>
+                                        <div class="progress-track">
+                                            <div class="progress-fill" id="event-progress-bar" style="width: 84.3%; background: linear-gradient(90deg, #11998e, #38ef7d);"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="event-actions">
+                                        <button class="btn-event-contribute" onclick="contributeToEvent()">
+                                            <i class="fa-solid fa-hand-holding-seedling"></i> Contribute 10 ⚡ to plant 1 tree
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 4: AI COMPANION (Chat & Gemini Advisor) -->
+                    <div class="tab-content" id="content-ai-companion">
+                        <div class="content-header" style="display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;">
+                            <div>
+                                <h3>🤖 Gemini Climate Advisor & Companion</h3>
+                                <p>Ask our Forest Guardian advice on reducing emissions, or simulate trips to check their impact.</p>
+                            </div>
+                            <span class="tab-limit-badge" id="chat-limit-badge" style="font-size: 0.75rem; color: var(--text-muted); background: rgba(255,255,255,0.05); padding: 0.25rem 0.6rem; border-radius: 6px; font-weight: 600; flex-shrink: 0; margin-top: 0.25rem;">AI: Unlimited (Demo)</span>
+                        </div>
+
+                        <div class="ai-layout">
+                            <div class="ai-companion-profile">
+                                <div class="guardian-avatar" id="guardian-avatar-box">
+                                    <img src="guardian.png" class="avatar-graphic" id="guardian-avatar-img" alt="Forest Guardian">
+                                    <div class="guardian-mood-badge" id="guardian-mood-badge">😊</div>
+                                    <div class="pulse-ring" id="guardian-pulse-ring"></div>
+                                </div>
+                                <h4>Forest Guardian</h4>
+                                <span class="guardian-status" id="guardian-status-text">Online &bull; Level 4 Advisor</span>
+                                
+                                <div class="quick-prompts">
+                                    <h5>Ask Forest Guardian:</h5>
+                                    <button class="prompt-chip" onclick="sendQuickPrompt('I\'m flying from Delhi to Mumbai next week. Calculate carbon footprint.')">
+                                        ✈️ Flight Delhi to Mumbai
+                                    </button>
+                                    <button class="prompt-chip" onclick="sendQuickPrompt('Give me a daily green challenge to earn Green Energy!')">
+                                        🌱 Daily Climate Challenge
+                                    </button>
+                                    <button class="prompt-chip" onclick="sendQuickPrompt('How do I reduce my electricity bill emissions?')">
+                                        🔌 Reduce electricity footprint
+                                    </button>
+                                    <button class="prompt-chip" onclick="sendQuickPrompt('Suggest a quick, sustainable vegetarian lunch recipe.')">
+                                        🥗 Sustainable lunch recipe
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="glass-card ai-chat-container">
+                                <div class="chat-window" id="ai-chat-window">
+                                    <div class="msg guardian">
+                                        <div class="msg-sender"><i class="fa-solid fa-owl"></i> Forest Guardian</div>
+                                        <div class="msg-text">Welcome, Eco-builder! I am the Forest Guardian. I watch over the sky, rivers, and wildlife of your island. Ask me anything about sustainability or try a quick challenge to clean up the air!</div>
+                                    </div>
+                                </div>
+                                <div class="chat-input-row">
+                                    <input type="text" id="ai-chat-input" placeholder="Ask about emissions, recipes, travel, challenges...">
+                                    <button class="btn-chat-send" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- TAB 5: CARBON BATTLE -->
+                    <div class="tab-content" id="content-carbon-battle">
+                        <div class="content-header">
+                            <h3>⚔️ Carbon Battle Arena</h3>
+                            <p>Challenge other tribes or friends to a friendly footprint comparison. No shaming, only rewards!</p>
+                        </div>
+
+                        <div id="battle-tab-container">
+                            <div class="battle-arena">
+                                <div class="glass-card battle-card">
+                                    <div class="battle-fighters">
+                                        <!-- Player 1 (You) -->
+                                        <div class="fighter player-one">
+                                            <div class="fighter-avatar aura-very-low"><i class="fa-solid fa-user-astronaut"></i></div>
+                                            <h4>Akshay (You)</h4>
+                                            <span class="fighter-aura emerald">Emerald Aura</span>
+                                            <div class="fighter-scores">
+                                                <div><span>Transport:</span> <strong>Low</strong></div>
+                                                <div><span>Energy:</span> <strong>Efficient</strong></div>
+                                                <div><span>Diet:</span> <strong>Green</strong></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="versus-divider">VS</div>
+
+                                        <!-- Player 2 (Friend) -->
+                                        <div class="fighter player-two">
+                                            <div class="fighter-avatar aura-high"><i class="fa-solid fa-user-ninja"></i></div>
+                                            <h4>Sarah</h4>
+                                            <span class="fighter-aura orange">Orange Smog Aura</span>
+                                            <div class="fighter-scores">
+                                                <div><span>Transport:</span> <strong>Average</strong></div>
+                                                <div><span>Energy:</span> <strong>High Usage</strong></div>
+                                                <div><span>Diet:</span> <strong>Mixed</strong></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="battle-actions">
+                                        <button class="btn-battle" id="btn-run-battle" onclick="runCarbonBattle()">
+                                            <i class="fa-solid fa-swords"></i> Execute Carbon Battle!
+                                        </button>
+                                    </div>
+
+                                    <div class="battle-outcome" id="battle-outcome" style="display: none;">
+                                        <!-- Dynamic results filled by app.js -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal to notify return from visit mode -->
+    <div class="visit-overlay-banner" id="visit-banner" style="display: none;">
+        <span>Currently viewing <strong id="visited-friend-name">Sarah</strong>'s island. Actions are locked.</span>
+        <button class="btn-return" onclick="returnToOwnIsland()">Return to My EcoCity</button>
+    </div>
+
+    <!-- Auth Overlay (Blocking landing screen) -->
+    <div class="auth-overlay" id="auth-overlay" style="display: flex;">
+        <video class="auth-video-bg" autoplay loop muted playsinline>
+            <source src="A_cinematic_fantasy_transforma.mp4" type="video/mp4">
+        </video>
+        <div class="auth-modal-card glass-modal">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-leaf-maple"></i> Connect to EcoVerse</h3>
+                <p>Sign in or connection profile to load your persistent game state.</p>
+            </div>
+            
+            <!-- Auth Segment/Tab Selector -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab-btn active" id="tab-guest-login" onclick="switchAuthTab('guest')">
+                    <i class="fa-solid fa-user-secret"></i> Quick Guest
+                </button>
+                <button type="button" class="auth-tab-btn" id="tab-email-login" onclick="switchAuthTab('email')">
+                    <i class="fa-solid fa-envelope"></i> Email Profile
+                </button>
+            </div>
+
+            <!-- Tab Content 1: Guest / Anonymous Auth -->
+            <div class="auth-tab-content active" id="auth-content-guest">
+                <p class="tab-description">Play instantly as a guest. Your island stats and progress are tracked in this browser session. You can link it to an email account later!</p>
+                <button type="button" class="btn-primary btn-full-width" onclick="loginAnonymously()">
+                    <i class="fa-solid fa-bolt"></i> Instant Guest Connection
+                </button>
+            </div>
+
+            <!-- Tab Content 2: Email Sign In / Sign Up -->
+            <div class="auth-tab-content" id="auth-content-email" style="display: none;">
+                <div class="auth-form-fields">
+                    <div class="input-group">
+                        <label for="auth-email">Email Address</label>
+                        <input type="email" id="auth-email" placeholder="name@example.com" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label for="auth-password">Password</label>
+                        <div class="password-wrapper">
+                            <input type="password" id="auth-password" placeholder="Min 6 characters" autocomplete="new-password">
+                            <button type="button" class="password-toggle-btn" onclick="togglePasswordVisibility()" title="Toggle password visibility">
+                                <i class="fa-solid fa-eye" id="password-toggle-icon"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="auth-error-msg" id="auth-error-msg" style="display: none;"></div>
+                </div>
+                <div class="auth-action-buttons" style="margin-top: 1.25rem; display: flex; gap: 0.75rem;">
+                    <button type="button" class="btn-primary btn-full-width" onclick="handleEmailAuth('signin')">Sign In</button>
+                    <button type="button" class="btn-secondary btn-full-width" onclick="handleEmailAuth('signup')">Register</button>
+                </div>
+            </div>
+
+            <!-- Global Social Sign-in Option -->
+            <div class="auth-divider">
+                <span>or</span>
+            </div>
+            <button type="button" class="btn-google btn-full-width" onclick="loginWithGoogle()">
+                <i class="fa-brands fa-google"></i> Sign In with Google
+            </button>
+        </div>
+    </div>
+    
+    <!-- Reusable Developer Settings Modal -->
+    <div class="confirm-overlay" id="settings-overlay" style="display: none;">
+        <div class="auth-modal-card glass-modal" style="max-width: 400px; padding: 1.5rem;">
+            <div class="modal-header" style="margin-bottom: 1rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.15rem; color: #fff; font-weight: 700; margin: 0 0 0.25rem 0;">
+                    <i class="fa-solid fa-gears" style="color: var(--accent-emerald);"></i> Developer Settings
+                </h3>
+                <p style="font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4; margin: 0;">Configure custom parameters for your EcoVerse connection.</p>
+            </div>
+            <div class="auth-form-fields" style="margin-top: 1rem;">
+                <div class="input-group" style="display: flex; flex-direction: column; gap: 0.35rem;">
+                    <label for="custom-gemini-key" style="font-size: 0.75rem; color: var(--text-primary); font-weight: 600;">Custom Gemini API Key</label>
+                    <span style="font-size: 0.65rem; color: var(--text-secondary); margin-bottom: 0.25rem; line-height: 1.3;">
+                        Enter your own Gemini API Key to bypass daily server limits. Your key remains in your local browser storage and is never saved on our servers.
+                    </span>
+                    <div class="password-wrapper" style="position: relative; display: flex; align-items: center;">
+                        <input type="password" id="custom-gemini-key" placeholder="AIzaSy..." style="width: 100%; padding: 0.6rem 2.5rem 0.6rem 0.75rem; background: rgba(0, 0, 0, 0.25); border: 1px solid var(--border-glass); border-radius: var(--radius-sm); color: #fff; font-size: 0.8rem;" autocomplete="off">
+                        <button type="button" class="password-toggle-btn" onclick="toggleSettingsKeyVisibility()" style="position: absolute; right: 0.5rem; background: none; border: none; color: var(--text-secondary); cursor: pointer;" title="Toggle visibility">
+                            <i class="fa-solid fa-eye" id="settings-key-toggle-icon"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="confirm-action-buttons" style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn-secondary" onclick="closeSettingsModal()" style="padding: 0.45rem 1.2rem; font-size: 0.8rem; min-width: 80px;">Cancel</button>
+                <button type="button" class="btn-primary" onclick="saveSettings()" style="padding: 0.45rem 1.2rem; font-size: 0.8rem; min-width: 80px; background: var(--accent-emerald); border-color: rgba(56, 239, 125, 0.4);">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reusable Premium Confirmation Dialog -->
+    <div class="confirm-overlay" id="confirm-overlay" style="display: none;">
+        <div class="confirm-modal-card glass-modal">
+            <div class="modal-header" style="margin-bottom: 1rem;">
+                <h3 id="confirm-title" style="display: flex; align-items: center; gap: 0.5rem; font-size: 1.15rem; color: #fff; font-weight: 700; margin: 0 0 0.5rem 0;"></h3>
+                <p id="confirm-message" style="font-size: 0.825rem; color: var(--text-secondary); line-height: 1.4; margin: 0;"></p>
+            </div>
+            <div class="confirm-action-buttons" style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">
+                <button type="button" class="btn-secondary" id="confirm-cancel-btn" style="padding: 0.45rem 1.2rem; font-size: 0.8rem; min-width: 80px;">Cancel</button>
+                <button type="button" class="btn-primary" id="confirm-ok-btn" style="padding: 0.45rem 1.2rem; font-size: 0.8rem; min-width: 80px; border-color: rgba(239, 83, 80, 0.4); background: rgba(239, 83, 80, 0.9);">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Script loading -->
+    <!-- Firebase SDK Loader (Compat Mode for vanilla JS) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
