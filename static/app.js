@@ -15,6 +15,7 @@ const state = {
     solarUnits: 0,
     riverClean: false,
     wildlifeActive: false,
+    wildlifeCount: 0,
 
     // Visit Mode
     isVisitMode: false,
@@ -92,35 +93,125 @@ function initAuthListeners() {
     }
 }
 
-// Cinematic intro video handler
+// Cinematic intro video handler with seamless crossfading loop
 function initIntroVideo() {
-    const video = document.querySelector('.auth-video-bg');
+    const videos = document.querySelectorAll('.auth-video-bg');
     const overlay = document.getElementById('auth-overlay');
-    if (!video || !overlay) return;
+    if (videos.length < 2 || !overlay) return;
+    
+    const videoA = videos[0];
+    const videoB = videos[1];
     
     // Ensure the overlay starts without intro-visible
     overlay.classList.remove('intro-visible');
     state.introPlayed = false;
     
     let started = false;
+    let introTimeoutId = null;
+    let safetyTimeoutId = null;
+    
     const showCard = () => {
         if (started) return;
         started = true;
-        setTimeout(() => {
+        
+        introTimeoutId = setTimeout(() => {
             overlay.classList.add('intro-visible');
+            overlay.classList.remove('intro-clickable');
             state.introPlayed = true;
+            overlay.removeEventListener('click', skipIntro);
         }, 3000); // 3 seconds delay for cinematic intro
     };
     
-    video.addEventListener('playing', showCard);
-    video.addEventListener('play', showCard);
+    const skipIntro = (e) => {
+        if (e.target.closest('.glass-modal') || e.target.closest('.watch-intro-link')) return;
+        
+        started = true;
+        if (safetyTimeoutId) clearTimeout(safetyTimeoutId);
+        if (introTimeoutId) clearTimeout(introTimeoutId);
+        
+        overlay.classList.add('intro-visible');
+        overlay.classList.remove('intro-clickable');
+        state.introPlayed = true;
+        overlay.removeEventListener('click', skipIntro);
+    };
+    
+    window.skipIntroHandler = skipIntro;
+    overlay.addEventListener('click', skipIntro);
+    overlay.classList.add('intro-clickable');
+    
+    videoA.addEventListener('playing', showCard);
+    videoA.addEventListener('play', showCard);
+    videoB.addEventListener('playing', showCard);
+    videoB.addEventListener('play', showCard);
     
     // Safety fallback: if video doesn't fire events or autoplay block is hit
-    setTimeout(() => {
+    safetyTimeoutId = setTimeout(() => {
         if (!started) {
             showCard();
         }
     }, 1500);
+
+    // Setup seamless crossfade loop
+    let activeVideo = videoA;
+    let inactiveVideo = videoB;
+    let crossfading = false;
+    const fadeDuration = 1.2; // seconds (matches CSS transition)
+    
+    const checkTime = () => {
+        if (!activeVideo.duration) return;
+        
+        const remaining = activeVideo.duration - activeVideo.currentTime;
+        if (remaining <= fadeDuration && !crossfading) {
+            crossfading = true;
+            
+            // Start playing inactive video in background
+            inactiveVideo.currentTime = 0;
+            inactiveVideo.play().then(() => {
+                // Swap classes to trigger CSS opacity transitions
+                activeVideo.classList.remove('video-active');
+                inactiveVideo.classList.add('video-active');
+                
+                // Swap roles
+                const temp = activeVideo;
+                activeVideo = inactiveVideo;
+                inactiveVideo = temp;
+                
+                // Wait for transition to finish before pausing the old video
+                setTimeout(() => {
+                    inactiveVideo.pause();
+                    crossfading = false;
+                }, fadeDuration * 1000);
+            }).catch(err => {
+                console.error("Failed to play background video buffer:", err);
+                crossfading = false;
+            });
+        }
+    };
+    
+    videoA.addEventListener('timeupdate', checkTime);
+    videoB.addEventListener('timeupdate', checkTime);
+    
+    // Start playback
+    videoA.play().catch(() => {
+        console.log("Autoplay blocked, waiting for interaction.");
+    });
+}
+
+function startWatchingAnimation(event) {
+    if (event) event.preventDefault();
+    const overlay = document.getElementById('auth-overlay');
+    if (!overlay) return;
+    
+    overlay.classList.remove('intro-visible');
+    overlay.classList.add('intro-clickable');
+    state.introPlayed = false;
+    
+    triggerToast("🎬 Cinematic view active. Click anywhere to return.");
+    
+    if (window.skipIntroHandler) {
+        overlay.removeEventListener('click', window.skipIntroHandler);
+        overlay.addEventListener('click', window.skipIntroHandler);
+    }
 }
 
 // Tab Navigation
@@ -200,19 +291,19 @@ function renderState() {
     let activeTrees = state.treesCount;
     let activeSolar = state.solarUnits;
     let activeRiver = state.riverClean;
-    let activeWildlife = state.wildlifeActive;
+    let activeWildlife = state.wildlifeCount || (state.wildlifeActive ? 1 : 0);
     let aura = getAuraDetails(activeScore);
     
     if (state.isVisitMode) {
         // Friend's Island Stats
         if (state.visitedAura === "very_low") {
-            activeScore = 20; activeTrees = 12; activeSolar = 3; activeRiver = true; activeWildlife = true;
+            activeScore = 20; activeTrees = 12; activeSolar = 3; activeRiver = true; activeWildlife = 3;
         } else if (state.visitedAura === "low") {
-            activeScore = 70; activeTrees = 6; activeSolar = 2; activeRiver = true; activeWildlife = false;
+            activeScore = 70; activeTrees = 6; activeSolar = 2; activeRiver = true; activeWildlife = 1;
         } else if (state.visitedAura === "high") {
-            activeScore = 190; activeTrees = 2; activeSolar = 0; activeRiver = false; activeWildlife = false;
+            activeScore = 190; activeTrees = 2; activeSolar = 0; activeRiver = false; activeWildlife = 0;
         } else if (state.visitedAura === "very_high") {
-            activeScore = 270; activeTrees = 0; activeSolar = 0; activeRiver = false; activeWildlife = false;
+            activeScore = 270; activeTrees = 0; activeSolar = 0; activeRiver = false; activeWildlife = 0;
         }
         aura = getAuraDetails(activeScore);
     }
@@ -462,47 +553,60 @@ function renderEcoWorldSVG(level, trees, solar, riverClean, wildlife) {
 
     // Wildlife
     if (wildlife && (level === "low" || level === "very_low")) {
-        assets.push({
-            y: 240,
-            svg: `
-                <g class="animal" transform="translate(160, 240)">
-                    <!-- Shadow -->
-                    <ellipse cx="0" cy="9" rx="7" ry="2.5" fill="#000000" opacity="0.15" />
-                    <g class="animal-body">
-                        <!-- Legs -->
-                        <line x1="-4" y1="2" x2="-5" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
-                        <line x1="-1" y1="2" x2="-1" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
-                        <line x1="2" y1="2" x2="1" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
-                        <line x1="5" y1="2" x2="5" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
-                        
-                        <!-- Body -->
-                        <ellipse cx="0" cy="2" rx="7" ry="4.5" fill="#e67e22" />
-                        <!-- White belly patch -->
-                        <ellipse cx="0" cy="3.5" rx="5" ry="2" fill="#ffffff" opacity="0.8" />
-                        
-                        <!-- Neck & Head -->
-                        <path d="M 4,0 L 8,-6 L 11,-5 L 7,2 Z" fill="#e67e22" />
-                        <ellipse cx="10" cy="-6" rx="3.5" ry="2.5" fill="#e67e22" />
-                        
-                        <!-- Snout -->
-                        <polygon points="11,-7 14,-5 11,-4" fill="#d35400" />
-                        <circle cx="13" cy="-5" r="0.6" fill="#000000" /> <!-- Nose -->
-                        
-                        <!-- Ears -->
-                        <polygon points="9,-8 9,-12 11,-9" fill="#d35400" />
-                        
-                        <!-- Spots -->
-                        <circle cx="-3" cy="1" r="0.8" fill="#ffffff" opacity="0.9" />
-                        <circle cx="0" cy="0" r="0.8" fill="#ffffff" opacity="0.9" />
-                        <circle cx="2" cy="1.5" r="0.8" fill="#ffffff" opacity="0.9" />
-                        
-                        <!-- Tail -->
-                        <path d="M -6,0 Q -9,-3 -7,-5" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" />
-                        <circle cx="-7" cy="-5" r="1" fill="#ffffff" />
+        const animalPositions = [
+            { x: 160, y: 240 },
+            { x: 130, y: 220 },
+            { x: 190, y: 230 },
+            { x: 145, y: 250 },
+            { x: 175, y: 215 },
+            { x: 120, y: 235 },
+            { x: 200, y: 255 }
+        ];
+        const count = typeof wildlife === 'number' ? wildlife : 1;
+        for (let i = 0; i < Math.min(count, animalPositions.length); i++) {
+            const pos = animalPositions[i];
+            assets.push({
+                y: pos.y,
+                svg: `
+                    <g class="animal" transform="translate(${pos.x}, ${pos.y})">
+                        <!-- Shadow -->
+                        <ellipse cx="0" cy="9" rx="7" ry="2.5" fill="#000000" opacity="0.15" />
+                        <g class="animal-body">
+                            <!-- Legs -->
+                            <line x1="-4" y1="2" x2="-5" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
+                            <line x1="-1" y1="2" x2="-1" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
+                            <line x1="2" y1="2" x2="1" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
+                            <line x1="5" y1="2" x2="5" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
+                            
+                            <!-- Body -->
+                            <ellipse cx="0" cy="2" rx="7" ry="4.5" fill="#e67e22" />
+                            <!-- White belly patch -->
+                            <ellipse cx="0" cy="3.5" rx="5" ry="2" fill="#ffffff" opacity="0.8" />
+                            
+                            <!-- Neck & Head -->
+                            <path d="M 4,0 L 8,-6 L 11,-5 L 7,2 Z" fill="#e67e22" />
+                            <ellipse cx="10" cy="-6" rx="3.5" ry="2.5" fill="#e67e22" />
+                            
+                            <!-- Snout -->
+                            <polygon points="11,-7 14,-5 11,-4" fill="#d35400" />
+                            <circle cx="13" cy="-5" r="0.6" fill="#000000" /> <!-- Nose -->
+                            
+                            <!-- Ears -->
+                            <polygon points="9,-8 9,-12 11,-9" fill="#d35400" />
+                            
+                            <!-- Spots -->
+                            <circle cx="-3" cy="1" r="0.8" fill="#ffffff" opacity="0.9" />
+                            <circle cx="0" cy="0" r="0.8" fill="#ffffff" opacity="0.9" />
+                            <circle cx="2" cy="1.5" r="0.8" fill="#ffffff" opacity="0.9" />
+                            
+                            <!-- Tail -->
+                            <path d="M -6,0 Q -9,-3 -7,-5" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" />
+                            <circle cx="-7" cy="-5" r="1" fill="#ffffff" />
+                        </g>
                     </g>
-                </g>
-            `
-        });
+                `
+            });
+        }
     }
 
     // Trees
@@ -964,8 +1068,9 @@ function buyUpgrade(item, cost) {
         }
     } else if (item === "wildlife") {
         state.wildlifeActive = true;
+        state.wildlifeCount = (state.wildlifeCount || 0) + 1;
         state.naturePoints += 120;
-        upgradeMessage = "🦊 Forest wildlife introduced! Deer and foxes are now returning.";
+        upgradeMessage = `🦊 Forest wildlife introduced (Count: ${state.wildlifeCount})! Deer and foxes are now returning.`;
     }
 
     triggerToast(upgradeMessage);
@@ -1385,16 +1490,78 @@ function updateTribeProgress(reduction) {
     fillBar.style.width = `${newPct}%`;
 }
 
+// Helpers for quantity selection and UI updating
+function updateContributeButtonText() {
+    const qtyInput = document.getElementById("event-tree-qty");
+    let qty = 1;
+    if (qtyInput) {
+        qty = parseInt(qtyInput.value);
+        if (isNaN(qty) || qty < 1) {
+            qty = 1;
+        }
+    }
+    const totalPoints = qty * 10;
+    const btn = document.getElementById("btn-event-contribute");
+    if (btn) {
+        btn.innerHTML = `<i class="fa-solid fa-hand-holding-seedling"></i> Contribute ${totalPoints} Nature Points to plant ${qty.toLocaleString()} ${qty === 1 ? 'tree' : 'trees'}`;
+    }
+}
+
+function setEventTreeQty(qty) {
+    const qtyInput = document.getElementById("event-tree-qty");
+    if (qtyInput) {
+        qtyInput.value = qty;
+        updateContributeButtonText();
+    }
+}
+
+function updateLocalGlobalUI(qty) {
+    const healthVal = document.getElementById("global-health-val");
+    if (healthVal) {
+        let health = parseFloat(healthVal.innerText);
+        if (isNaN(health)) health = 83.4;
+        const newHealth = parseFloat((health + qty * 0.05).toFixed(2));
+        healthVal.innerText = `${newHealth}%`;
+    }
+
+    const progText = document.getElementById("event-progress-text");
+    const progPct = document.getElementById("event-progress-pct");
+    const progBar = document.getElementById("event-progress-bar");
+    if (progText) {
+        const match = progText.innerText.match(/Progress:\s+([\d,]+)/);
+        if (match) {
+            const cur = parseInt(match[1].replace(/,/g, '')) + qty;
+            const target = 1000000;
+            const newPct = Math.min(100, parseFloat(((cur / target) * 100).toFixed(1)));
+            progText.innerText = `Progress: ${cur.toLocaleString()} / ${target.toLocaleString()} Trees`;
+            if (progPct) progPct.innerText = `${newPct}%`;
+            if (progBar) progBar.style.width = `${newPct}%`;
+        }
+    }
+}
+
 // Global Planet Restoration Page
 function contributeToEvent() {
     if (state.isVisitMode) return;
-    if (state.greenEnergy < 10) {
-        alert("Not enough Green Energy! Log more actions first.");
+    
+    const qtyInput = document.getElementById("event-tree-qty");
+    let qty = 1;
+    if (qtyInput) {
+        qty = parseInt(qtyInput.value);
+        if (isNaN(qty) || qty < 1) {
+            qty = 1;
+            qtyInput.value = 1;
+            updateContributeButtonText();
+        }
+    }
+
+    const totalPoints = qty * 10;
+    if (state.naturePoints < totalPoints) {
+        window.showAlert("Not Enough Points", `You need at least ${totalPoints} Nature Points to contribute ${qty} ${qty === 1 ? 'tree' : 'trees'}. Complete tasks or upgrade your island first!`);
         return;
     }
 
-    state.greenEnergy -= 10;
-    state.naturePoints += 15;
+    state.naturePoints -= totalPoints;
     renderState();
 
     const isRegistered = state.firebaseActive && state.firebaseUser && !state.firebaseUser.isAnonymous;
@@ -1406,13 +1573,16 @@ function contributeToEvent() {
         fetch("/api/multiplayer/global-stats/contribute", {
             method: "POST",
             headers: {
+                "Content-Type": "application/json",
                 "Authorization": `Bearer ${state.firebaseToken}`
-            }
+            },
+            body: JSON.stringify({ count: qty })
         })
         .then(res => res.json())
         .then(resData => {
             if (resData.success) {
-                triggerToast("🌍 Contributed to Earth Restoration Event live!");
+                triggerToast(`🌍 Contributed ${qty} ${qty === 1 ? 'tree' : 'trees'} to Earth Restoration Event live!`);
+                updateLocalGlobalUI(qty);
             } else {
                 console.error("Error updating global stats:", resData.error);
                 triggerToast("⚠️ Failed to update global stats.");
@@ -1424,30 +1594,8 @@ function contributeToEvent() {
         });
     } else {
         // Local/Guest mode increments
-        const healthVal = document.getElementById("global-health-val");
-        let health = parseFloat(healthVal.innerText);
-        if (isNaN(health)) health = 83.4;
-        
-        const newHealth = parseFloat((health + 0.05).toFixed(2));
-        if (healthVal) healthVal.innerText = `${newHealth}%`;
-
-        // Local progress updates
-        const progText = document.getElementById("event-progress-text");
-        const progPct = document.getElementById("event-progress-pct");
-        const progBar = document.getElementById("event-progress-bar");
-        if (progText) {
-            const match = progText.innerText.match(/Progress:\s+([\d,]+)/);
-            if (match) {
-                const cur = parseInt(match[1].replace(/,/g, '')) + 1;
-                const target = 1000000;
-                const newPct = Math.min(100, parseFloat(((cur / target) * 100).toFixed(1)));
-                progText.innerText = `Progress: ${cur.toLocaleString()} / ${target.toLocaleString()} Trees`;
-                if (progPct) progPct.innerText = `${newPct}%`;
-                if (progBar) progBar.style.width = `${newPct}%`;
-            }
-        }
-        
-        triggerToast("🌍 Contributed energy! The global forest cover is expanding.");
+        updateLocalGlobalUI(qty);
+        triggerToast("🌍 Contributed Nature Points! The global forest cover is expanding.");
         saveUserData();
     }
 }
@@ -2060,7 +2208,8 @@ function saveUserData() {
         treesCount: state.treesCount,
         solarUnits: state.solarUnits,
         riverClean: state.riverClean,
-        wildlifeActive: state.wildlifeActive
+        wildlifeActive: state.wildlifeActive,
+        wildlifeCount: state.wildlifeCount || 0
     };
 
     if (state.firebaseActive && state.firebaseUser) {
@@ -2090,7 +2239,8 @@ function saveUserData() {
                         treesCount: state.treesCount,
                         solarUnits: state.solarUnits,
                         riverClean: state.riverClean,
-                        wildlifeActive: state.wildlifeActive
+                        wildlifeActive: state.wildlifeActive,
+                        wildlifeCount: state.wildlifeCount || 0
                     })
                 })
                 .then(res => res.json())
@@ -2121,7 +2271,8 @@ function loadUserData() {
         treesCount: 0,
         solarUnits: 0,
         riverClean: false,
-        wildlifeActive: false
+        wildlifeActive: false,
+        wildlifeCount: 0
     };
 
     // Guest sessions always start with a clean slate
@@ -2202,6 +2353,7 @@ function applyLoadedStats(stats) {
     state.solarUnits = stats.solarUnits !== undefined ? stats.solarUnits : 0;
     state.riverClean = stats.riverClean !== undefined ? stats.riverClean : false;
     state.wildlifeActive = stats.wildlifeActive !== undefined ? stats.wildlifeActive : false;
+    state.wildlifeCount = stats.wildlifeCount !== undefined ? stats.wildlifeCount : 0;
     
     renderState();
 }
@@ -2676,6 +2828,7 @@ window.visitRealUser = function(uid, displayName) {
 };
 
 function subscribeToGlobalPlanetStats() {
+    updateContributeButtonText();
     if (state.globalPlanetIntervalId) {
         clearInterval(state.globalPlanetIntervalId);
         state.globalPlanetIntervalId = null;

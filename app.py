@@ -1106,27 +1106,30 @@ async def get_global_stats(request: Request):
     }
 
 @app.post("/api/multiplayer/global-stats/contribute")
-async def contribute_global_stats(request: Request):
+async def contribute_global_stats(req: ContributeRequest, request: Request):
     uid, is_guest = await get_uid_from_request(request)
     if is_guest:
         return {"success": False, "error": "Guests cannot contribute to global event"}
         
+    if req.count < 1:
+        return {"success": False, "error": "Contribution count must be at least 1"}
+        
     # Increment local fallback stats
-    local_global_stats["totalTrees"] += 1
-    local_global_stats["totalCarbon"] += 25
+    local_global_stats["totalTrees"] += req.count
+    local_global_stats["totalCarbon"] += req.count * 25
     
     if firebase_enabled and db_client:
         try:
             db_client.collection("global_planet").document("stats").set({
-                "totalTrees": firestore.Increment(1),
-                "totalCarbon": firestore.Increment(25)
+                "totalTrees": firestore.Increment(req.count),
+                "totalCarbon": firestore.Increment(req.count * 25)
             }, merge=True)
             return {"success": True}
         except Exception as e:
             print(f"Error contributing to global stats in Firestore: {e}. Using local fallback.")
             return {"success": True, "note": "Contributed to local fallback stats"}
             
-    return {"success": True}
+    return {"success": True, "note": "Contributed to local fallback stats"}
 
 @app.get("/api/multiplayer/user-state/{target_uid}")
 async def get_target_user_state(target_uid: str, request: Request):

@@ -2117,3 +2117,100 @@ input:checked + .slider:before {
     border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Event Contribution Actions */
+.event-qty-selector {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    background: rgba(0, 0, 0, 0.20);
+    padding: 0.5rem 0.75rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-glass);
+    transition: border-color 0.2s ease;
+}
+
+.event-qty-selector:focus-within {
+    border-color: var(--accent-emerald);
+}
+
+.event-qty-selector span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.qty-control input[type="number"] {
+    width: 65px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    padding: 0.3rem;
+    text-align: center;
+    font-size: 0.8rem;
+    outline: none;
+    font-weight: 700;
+    font-family: var(--font-heading);
+    -moz-appearance: textfield;
+}
+
+.qty-control input[type="number"]::-webkit-outer-spin-button,
+.qty-control input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-preset-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid var(--border-glass);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary);
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.qty-preset-btn:hover {
+    background: rgba(56, 239, 125, 0.15);
+    border-color: rgba(56, 239, 125, 0.4);
+    color: var(--accent-emerald);
+}
+
+/* Intro Video skip styling */
+.auth-overlay.intro-clickable {
+    cursor: pointer;
+}
+
+.auth-overlay.intro-clickable .glass-modal {
+    cursor: default;
+}
+
+/* Watch Intro Link styles */
+.watch-intro-link {
+    font-size: 0.75rem;
+    color: var(--accent-emerald);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    cursor: pointer;
+    opacity: 0.8;
+}
+
+.watch-intro-link:hover {
+    opacity: 1.0;
+    text-shadow: 0 0 8px rgba(56, 239, 125, 0.4);
+    transform: translateY(-1px);
+}
+
