@@ -431,25 +431,25 @@
                                             <span id="event-progress-text">Progress: 843,219 / 1,000,000 Trees</span>
                                             <strong id="event-progress-pct">84.3%</strong>
                                         </div>
-                                    <div class="progress-track">
+                                        <div class="progress-track">
                                             <div class="progress-fill" id="event-progress-bar" style="width: 84.3%; background: linear-gradient(90deg, #11998e, #38ef7d);"></div>
                                         </div>
                                     </div>
 
-                                     <div class="event-actions" style="display: flex; flex-direction: column; gap: 0.75rem;">
-                                         <div class="event-qty-selector">
-                                             <span>Trees to Plant:</span>
-                                             <div class="qty-control">
-                                                 <input type="number" id="event-tree-qty" min="1" max="10000" value="1" oninput="updateContributeButtonText()">
-                                                 <button class="qty-preset-btn" onclick="setEventTreeQty(1)">1</button>
-                                                 <button class="qty-preset-btn" onclick="setEventTreeQty(10)">10</button>
-                                                 <button class="qty-preset-btn" onclick="setEventTreeQty(100)">100</button>
-                                             </div>
-                                         </div>
-                                         <button class="btn-event-contribute" id="btn-event-contribute" onclick="contributeToEvent()">
-                                             <i class="fa-solid fa-hand-holding-seedling"></i> Contribute 10 Nature Points to plant 1 tree
-                                         </button>
-                                     </div>
+                                    <div class="event-actions" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                                        <div class="event-qty-selector">
+                                            <span>Trees to Plant:</span>
+                                            <div class="qty-control">
+                                                <input type="number" id="event-tree-qty" min="1" max="10000" value="1" oninput="updateContributeButtonText()">
+                                                <button class="qty-preset-btn" onclick="setEventTreeQty(1)">1</button>
+                                                <button class="qty-preset-btn" onclick="setEventTreeQty(10)">10</button>
+                                                <button class="qty-preset-btn" onclick="setEventTreeQty(100)">100</button>
+                                            </div>
+                                        </div>
+                                        <button class="btn-event-contribute" id="btn-event-contribute" onclick="contributeToEvent()">
+                                            <i class="fa-solid fa-hand-holding-seedling"></i> Contribute 10 Nature Points to plant 1 tree
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -572,9 +572,14 @@
 
     <!-- Auth Overlay (Blocking landing screen) -->
     <div class="auth-overlay" id="auth-overlay" style="display: flex;">
-        <video class="auth-video-bg" autoplay loop muted playsinline>
-            <source src="A_cinematic_fantasy_transforma.mp4" type="video/mp4">
-        </video>
+        <div class="auth-video-container">
+            <video class="auth-video-bg video-active" autoplay muted playsinline>
+                <source src="A_cinematic_fantasy_transforma.mp4" type="video/mp4">
+            </video>
+            <video class="auth-video-bg" muted playsinline>
+                <source src="A_cinematic_fantasy_transforma.mp4" type="video/mp4">
+            </video>
+        </div>
         <div class="auth-modal-card glass-modal">
             <div class="modal-header">
                 <h3><i class="fa-solid fa-leaf-maple"></i> Connect to EcoVerse</h3>
@@ -631,10 +636,10 @@
                 <i class="fa-brands fa-google"></i> Sign In with Google
             </button>
             <div style="text-align: center; margin-top: 1.25rem;">
-                 <a href="#" class="watch-intro-link" onclick="startWatchingAnimation(event)">
-                     <i class="fa-solid fa-circle-play"></i> Watch Full Cinematic Animation
-                 </a>
-             </div>
+                <a href="#" class="watch-intro-link" onclick="startWatchingAnimation(event)">
+                    <i class="fa-solid fa-circle-play"></i> Watch Full Cinematic Animation
+                </a>
+            </div>
         </div>
     </div>
     
@@ -659,6 +664,12 @@
                             <i class="fa-solid fa-eye" id="settings-key-toggle-icon"></i>
                         </button>
                     </div>
+                </div>
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label style="font-size: 0.75rem; color: var(--text-primary); font-weight: 600;">Cinematic Animations</label>
+                    <button type="button" class="btn-secondary btn-full-width" onclick="replayCinematicIntro()" style="margin-top: 0.35rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem; background: rgba(255,255,255,0.05); padding: 0.55rem; font-size: 0.8rem; border: 1px solid var(--border-glass); border-radius: var(--radius-sm); color: #fff; cursor: pointer; font-family: var(--font-heading); font-weight: 600;">
+                        <i class="fa-solid fa-circle-play"></i> Watch Cinematic Intro
+                    </button>
                 </div>
             </div>
             <div class="confirm-action-buttons" style="display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem;">

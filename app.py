@@ -564,6 +564,9 @@ class JoinTribeRequest(BaseModel):
 class ChatMessageRequest(BaseModel):
     text: str
 
+class ContributeRequest(BaseModel):
+    count: int = 1
+
 # In-memory registries for Local/Mock fallback mode
 local_user_profiles = {
     "sarah_uid": {

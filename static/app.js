@@ -15,7 +15,6 @@ const state = {
     solarUnits: 0,
     riverClean: false,
     wildlifeActive: false,
-    wildlifeCount: 0,
 
     // Visit Mode
     isVisitMode: false,
@@ -93,7 +92,7 @@ function initAuthListeners() {
     }
 }
 
-// Cinematic intro video handler with seamless crossfading loop
+// Cinematic intro video handler
 function initIntroVideo() {
     const videos = document.querySelectorAll('.auth-video-bg');
     const overlay = document.getElementById('auth-overlay');
@@ -129,9 +128,14 @@ function initIntroVideo() {
         if (safetyTimeoutId) clearTimeout(safetyTimeoutId);
         if (introTimeoutId) clearTimeout(introTimeoutId);
         
-        overlay.classList.add('intro-visible');
-        overlay.classList.remove('intro-clickable');
-        state.introPlayed = true;
+        if (state.replayingIntro) {
+            overlay.style.display = "none";
+            state.replayingIntro = false;
+        } else {
+            overlay.classList.add('intro-visible');
+            overlay.classList.remove('intro-clickable');
+            state.introPlayed = true;
+        }
         overlay.removeEventListener('click', skipIntro);
     };
     
@@ -144,14 +148,7 @@ function initIntroVideo() {
     videoB.addEventListener('playing', showCard);
     videoB.addEventListener('play', showCard);
     
-    // Safety fallback: if video doesn't fire events or autoplay block is hit
-    safetyTimeoutId = setTimeout(() => {
-        if (!started) {
-            showCard();
-        }
-    }, 1500);
-
-    // Setup seamless crossfade loop
+    // Seamless crossfade loop
     let activeVideo = videoA;
     let inactiveVideo = videoB;
     let crossfading = false;
@@ -191,6 +188,13 @@ function initIntroVideo() {
     videoA.addEventListener('timeupdate', checkTime);
     videoB.addEventListener('timeupdate', checkTime);
     
+    // Safety fallback: if video doesn't fire events or autoplay block is hit
+    safetyTimeoutId = setTimeout(() => {
+        if (!started) {
+            showCard();
+        }
+    }, 1500);
+    
     // Start playback
     videoA.play().catch(() => {
         console.log("Autoplay blocked, waiting for interaction.");
@@ -202,6 +206,13 @@ function startWatchingAnimation(event) {
     const overlay = document.getElementById('auth-overlay');
     if (!overlay) return;
     
+    if (overlay.style.display === "none") {
+        overlay.style.display = "flex";
+        state.replayingIntro = true;
+    } else {
+        state.replayingIntro = false;
+    }
+    
     overlay.classList.remove('intro-visible');
     overlay.classList.add('intro-clickable');
     state.introPlayed = false;
@@ -212,6 +223,11 @@ function startWatchingAnimation(event) {
         overlay.removeEventListener('click', window.skipIntroHandler);
         overlay.addEventListener('click', window.skipIntroHandler);
     }
+}
+
+function replayCinematicIntro() {
+    closeSettingsModal();
+    startWatchingAnimation(null);
 }
 
 // Tab Navigation
@@ -291,19 +307,19 @@ function renderState() {
     let activeTrees = state.treesCount;
     let activeSolar = state.solarUnits;
     let activeRiver = state.riverClean;
-    let activeWildlife = state.wildlifeCount || (state.wildlifeActive ? 1 : 0);
+    let activeWildlife = state.wildlifeActive;
     let aura = getAuraDetails(activeScore);
     
     if (state.isVisitMode) {
         // Friend's Island Stats
         if (state.visitedAura === "very_low") {
-            activeScore = 20; activeTrees = 12; activeSolar = 3; activeRiver = true; activeWildlife = 3;
+            activeScore = 20; activeTrees = 12; activeSolar = 3; activeRiver = true; activeWildlife = true;
         } else if (state.visitedAura === "low") {
-            activeScore = 70; activeTrees = 6; activeSolar = 2; activeRiver = true; activeWildlife = 1;
+            activeScore = 70; activeTrees = 6; activeSolar = 2; activeRiver = true; activeWildlife = false;
         } else if (state.visitedAura === "high") {
-            activeScore = 190; activeTrees = 2; activeSolar = 0; activeRiver = false; activeWildlife = 0;
+            activeScore = 190; activeTrees = 2; activeSolar = 0; activeRiver = false; activeWildlife = false;
         } else if (state.visitedAura === "very_high") {
-            activeScore = 270; activeTrees = 0; activeSolar = 0; activeRiver = false; activeWildlife = 0;
+            activeScore = 270; activeTrees = 0; activeSolar = 0; activeRiver = false; activeWildlife = false;
         }
         aura = getAuraDetails(activeScore);
     }
@@ -553,60 +569,47 @@ function renderEcoWorldSVG(level, trees, solar, riverClean, wildlife) {
 
     // Wildlife
     if (wildlife && (level === "low" || level === "very_low")) {
-        const animalPositions = [
-            { x: 160, y: 240 },
-            { x: 130, y: 220 },
-            { x: 190, y: 230 },
-            { x: 145, y: 250 },
-            { x: 175, y: 215 },
-            { x: 120, y: 235 },
-            { x: 200, y: 255 }
-        ];
-        const count = typeof wildlife === 'number' ? wildlife : 1;
-        for (let i = 0; i < Math.min(count, animalPositions.length); i++) {
-            const pos = animalPositions[i];
-            assets.push({
-                y: pos.y,
-                svg: `
-                    <g class="animal" transform="translate(${pos.x}, ${pos.y})">
-                        <!-- Shadow -->
-                        <ellipse cx="0" cy="9" rx="7" ry="2.5" fill="#000000" opacity="0.15" />
-                        <g class="animal-body">
-                            <!-- Legs -->
-                            <line x1="-4" y1="2" x2="-5" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
-                            <line x1="-1" y1="2" x2="-1" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
-                            <line x1="2" y1="2" x2="1" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
-                            <line x1="5" y1="2" x2="5" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
-                            
-                            <!-- Body -->
-                            <ellipse cx="0" cy="2" rx="7" ry="4.5" fill="#e67e22" />
-                            <!-- White belly patch -->
-                            <ellipse cx="0" cy="3.5" rx="5" ry="2" fill="#ffffff" opacity="0.8" />
-                            
-                            <!-- Neck & Head -->
-                            <path d="M 4,0 L 8,-6 L 11,-5 L 7,2 Z" fill="#e67e22" />
-                            <ellipse cx="10" cy="-6" rx="3.5" ry="2.5" fill="#e67e22" />
-                            
-                            <!-- Snout -->
-                            <polygon points="11,-7 14,-5 11,-4" fill="#d35400" />
-                            <circle cx="13" cy="-5" r="0.6" fill="#000000" /> <!-- Nose -->
-                            
-                            <!-- Ears -->
-                            <polygon points="9,-8 9,-12 11,-9" fill="#d35400" />
-                            
-                            <!-- Spots -->
-                            <circle cx="-3" cy="1" r="0.8" fill="#ffffff" opacity="0.9" />
-                            <circle cx="0" cy="0" r="0.8" fill="#ffffff" opacity="0.9" />
-                            <circle cx="2" cy="1.5" r="0.8" fill="#ffffff" opacity="0.9" />
-                            
-                            <!-- Tail -->
-                            <path d="M -6,0 Q -9,-3 -7,-5" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" />
-                            <circle cx="-7" cy="-5" r="1" fill="#ffffff" />
-                        </g>
+        assets.push({
+            y: 240,
+            svg: `
+                <g class="animal" transform="translate(160, 240)">
+                    <!-- Shadow -->
+                    <ellipse cx="0" cy="9" rx="7" ry="2.5" fill="#000000" opacity="0.15" />
+                    <g class="animal-body">
+                        <!-- Legs -->
+                        <line x1="-4" y1="2" x2="-5" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
+                        <line x1="-1" y1="2" x2="-1" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
+                        <line x1="2" y1="2" x2="1" y2="9" stroke="#e67e22" stroke-width="1.5" stroke-linecap="round" />
+                        <line x1="5" y1="2" x2="5" y2="9" stroke="#d35400" stroke-width="1.5" stroke-linecap="round" />
+                        
+                        <!-- Body -->
+                        <ellipse cx="0" cy="2" rx="7" ry="4.5" fill="#e67e22" />
+                        <!-- White belly patch -->
+                        <ellipse cx="0" cy="3.5" rx="5" ry="2" fill="#ffffff" opacity="0.8" />
+                        
+                        <!-- Neck & Head -->
+                        <path d="M 4,0 L 8,-6 L 11,-5 L 7,2 Z" fill="#e67e22" />
+                        <ellipse cx="10" cy="-6" rx="3.5" ry="2.5" fill="#e67e22" />
+                        
+                        <!-- Snout -->
+                        <polygon points="11,-7 14,-5 11,-4" fill="#d35400" />
+                        <circle cx="13" cy="-5" r="0.6" fill="#000000" /> <!-- Nose -->
+                        
+                        <!-- Ears -->
+                        <polygon points="9,-8 9,-12 11,-9" fill="#d35400" />
+                        
+                        <!-- Spots -->
+                        <circle cx="-3" cy="1" r="0.8" fill="#ffffff" opacity="0.9" />
+                        <circle cx="0" cy="0" r="0.8" fill="#ffffff" opacity="0.9" />
+                        <circle cx="2" cy="1.5" r="0.8" fill="#ffffff" opacity="0.9" />
+                        
+                        <!-- Tail -->
+                        <path d="M -6,0 Q -9,-3 -7,-5" fill="none" stroke="#e67e22" stroke-width="2" stroke-linecap="round" />
+                        <circle cx="-7" cy="-5" r="1" fill="#ffffff" />
                     </g>
-                `
-            });
-        }
+                </g>
+            `
+        });
     }
 
     // Trees
@@ -1068,9 +1071,8 @@ function buyUpgrade(item, cost) {
         }
     } else if (item === "wildlife") {
         state.wildlifeActive = true;
-        state.wildlifeCount = (state.wildlifeCount || 0) + 1;
         state.naturePoints += 120;
-        upgradeMessage = `🦊 Forest wildlife introduced (Count: ${state.wildlifeCount})! Deer and foxes are now returning.`;
+        upgradeMessage = "🦊 Forest wildlife introduced! Deer and foxes are now returning.";
     }
 
     triggerToast(upgradeMessage);
@@ -2208,8 +2210,7 @@ function saveUserData() {
         treesCount: state.treesCount,
         solarUnits: state.solarUnits,
         riverClean: state.riverClean,
-        wildlifeActive: state.wildlifeActive,
-        wildlifeCount: state.wildlifeCount || 0
+        wildlifeActive: state.wildlifeActive
     };
 
     if (state.firebaseActive && state.firebaseUser) {
@@ -2239,8 +2240,7 @@ function saveUserData() {
                         treesCount: state.treesCount,
                         solarUnits: state.solarUnits,
                         riverClean: state.riverClean,
-                        wildlifeActive: state.wildlifeActive,
-                        wildlifeCount: state.wildlifeCount || 0
+                        wildlifeActive: state.wildlifeActive
                     })
                 })
                 .then(res => res.json())
@@ -2271,8 +2271,7 @@ function loadUserData() {
         treesCount: 0,
         solarUnits: 0,
         riverClean: false,
-        wildlifeActive: false,
-        wildlifeCount: 0
+        wildlifeActive: false
     };
 
     // Guest sessions always start with a clean slate
@@ -2353,7 +2352,6 @@ function applyLoadedStats(stats) {
     state.solarUnits = stats.solarUnits !== undefined ? stats.solarUnits : 0;
     state.riverClean = stats.riverClean !== undefined ? stats.riverClean : false;
     state.wildlifeActive = stats.wildlifeActive !== undefined ? stats.wildlifeActive : false;
-    state.wildlifeCount = stats.wildlifeCount !== undefined ? stats.wildlifeCount : 0;
     
     renderState();
 }
