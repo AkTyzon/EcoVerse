@@ -74,6 +74,7 @@ document.addEventListener("DOMContentLoaded", () => {
     simulateWeatherEffects();
     renderTribeChat();
     updateSettingsUI();
+    initChatListeners();
 });
 
 // Setup keydown listeners for auth input fields (prevents default form actions)
@@ -89,6 +90,29 @@ function initAuthListeners() {
         };
         emailInput.addEventListener("keydown", handleEnterKey);
         passInput.addEventListener("keydown", handleEnterKey);
+    }
+}
+
+// Setup keydown listeners for AI Chat and Tribe Chat input fields (submit on Enter key)
+function initChatListeners() {
+    const aiChatInput = document.getElementById("ai-chat-input");
+    if (aiChatInput) {
+        aiChatInput.addEventListener("keydown", (e) => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+    }
+
+    const tribesTabContainer = document.getElementById("tribes-tab-container");
+    if (tribesTabContainer) {
+        tribesTabContainer.addEventListener("keydown", (e) => {
+            if (e.target && e.target.id === "tribe-chat-input" && e.key === "Enter") {
+                e.preventDefault();
+                sendTribeMessage();
+            }
+        });
     }
 }
 
