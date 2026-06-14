@@ -6,6 +6,55 @@ This repository contains the complete codebase containerized and ready to deploy
 
 ---
 
+## 🏆 Hackathon Judging Guide (Quick Test-Drive)
+
+> [!IMPORTANT]
+> **Live Demo URL:** [https://ecoverse-282925483383.us-central1.run.app](https://ecoverse-282925483383.us-central1.run.app)
+> 
+> *Test all features instantly in Guest/Demo Mode without creating any account, or sign up in seconds to enable live cloud multiplayer persistence!*
+
+### 🎥 Project Walkthrough Video
+![EcoVerse Walkthrough Video](./static/ecoverse_guest_demo.webp)
+
+Here is the best way to evaluate all aspects of the EcoVerse application in **under 2 minutes**:
+
+
+### 1. Interactive 3D World Simulation (Visuals & Mechanics)
+- On the main dashboard page, click **"Log Commute"**, **"Log Green Meal"**, or **"Log Recycle"**.
+- Watch the **Floating 3D Isometric Island** respond immediately:
+  - Pine trees grow and sprout green foliage.
+  - The river turns clean emerald-turquoise, waterfall mist rises, and the shadow deepens.
+  - Aerodynamic wind turbine blades rotate, and solar panels get a sleek metallic glare highlight sweep.
+  - Carbon indicators and your environmental aura shift colors based on your carbon offset score.
+- *Note:* Daily logging limits are day-specific, preventing spam logs on the same calendar day.
+
+### 2. AI Utility Bill Carbon Extraction (Gemini Multimodal)
+- Go to the **Verify Bill** tab.
+- Upload any mock utility bill image, PDF, or text file.
+- The app uses Gemini to extract resource consumption (kWh, Litres, etc.), calculate the exact carbon footprint offsets, and award Green Energy.
+- **Quota Resilience:** If the server's shared Gemini quota is exhausted, the backend returns a clean, detailed error advising you to use **Demo Mode** or configure your own key in the settings panel (gear icon) to bypass all rate limits.
+
+### 3. Forest Guardian AI Chat
+- Go to the **Forest Guardian** tab.
+- Click any of the quick-prompt chips (e.g., flight emissions or green vegetarian recipes) or type your own question, then press **Enter** to submit instantly.
+- The Forest Guardian dynamically responds using Gemini context aware of your island's score.
+
+### 4. Eco Tribes (Multiplayer & Real-Time Chat)
+- Select the **Eco Tribes** tab.
+- In Guest mode, you're assigned to a simulated multiplayer tribe where you can text other members and press **Enter** to chat.
+- Create an account using email or Google Sign-In, then create/join a live custom Tribe. Messages will poll and synchronize in real-time with other builders.
+
+### 5. Carbon Battle Arena
+- Navigate to the **Carbon Battle** tab.
+- Compete directly with simulated or real tribe mates by matching your sustainability statistics.
+- Click **"Challenge"** to see dual-card comparisons and dynamic outcome evaluations.
+
+### 6. Quota Bypass (Developer settings)
+- Click the **Gear settings icon** next to the user profile badge in the header.
+- Provide your own Gemini API key (saved securely inside browser `localStorage`). A glowing green key badge appears in the header, and the app routes Gemini API queries using your personal key with **zero daily limits**!
+
+---
+
 ## 🚀 Key Features
 1. **Isometric 3D World Rendering:** Dynamically updates tree growth, solar panels, active wind turbines, waterfall spray, and weather effects based on player and community carbon levels.
 2. **Dual-Mode AI Forest Guardian:** Supports local mock simulation or real-time Gemini 1.5 Flash AI connection for sustainability tips, carbon tracking, and gamified advice.
