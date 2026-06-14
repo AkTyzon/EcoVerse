@@ -108,7 +108,7 @@
                             <div style="display: flex; align-items: center; gap: 0.5rem;">
                                 <span class="toggle-label" id="global-toggle-label" style="font-weight: 700; font-size: 0.7rem;">Demo Mode</span>
                                 <label class="switch">
-                                    <input type="checkbox" id="global-mode-checkbox">
+                                    <input type="checkbox" id="global-mode-checkbox" aria-label="Toggle AI Mode globally">
                                     <span class="slider round"></span>
                                 </label>
                             </div>
@@ -245,7 +245,7 @@
                                             </div>
                                         </div>
                                         <div class="log-inputs">
-                                            <input type="number" id="input-commute-km" placeholder="km" min="1" max="100">
+                                            <input type="number" id="input-commute-km" placeholder="km" min="1" max="100" aria-label="Commute distance in kilometers">
                                             <button class="btn-log" onclick="logAction('commute')">Log</button>
                                         </div>
                                     </div>
@@ -296,7 +296,7 @@
                                         <div class="bill-upload-area" id="bill-drop-zone">
                                             <i class="fa-solid fa-cloud-arrow-up upload-icon"></i>
                                             <span>Drag & Drop or Click to Upload Bill</span>
-                                            <input type="file" id="bill-file-input" style="display:none;" accept=".pdf,image/*">
+                                            <input type="file" id="bill-file-input" style="display:none;" accept=".pdf,image/*" aria-label="Upload utility bill file">
                                             <div class="upload-loader" id="upload-loader" style="display:none;">
                                                 <div class="spinner"></div>
                                                 <span>AI parsing bill details...</span>
@@ -350,21 +350,21 @@
                                                 <span>32 kg saved</span>
                                             </div>
                                         </div>
-                                        <div class="member-item clickable-member" onclick="visitFriend('Sarah', 'high')">
+                                        <div class="member-item clickable-member" onclick="visitFriend('Sarah', 'high')" role="button" tabindex="0">
                                             <span class="member-name"><i class="fa-solid fa-user"></i> Sarah <small class="visit-hint">Visit Island</small></span>
                                             <div class="member-stats">
                                                 <span class="aura-indicator aura-high" title="Orange Smog Aura"></span>
                                                 <span>18 kg saved</span>
                                             </div>
                                         </div>
-                                        <div class="member-item clickable-member" onclick="visitFriend('David', 'low')">
+                                        <div class="member-item clickable-member" onclick="visitFriend('David', 'low')" role="button" tabindex="0">
                                             <span class="member-name"><i class="fa-solid fa-user"></i> David <small class="visit-hint">Visit Island</small></span>
                                             <div class="member-stats">
                                                 <span class="aura-indicator aura-low" title="Blue Sky Aura"></span>
                                                 <span>24 kg saved</span>
                                             </div>
                                         </div>
-                                        <div class="member-item clickable-member" onclick="visitFriend('Marcus', 'very_high')">
+                                        <div class="member-item clickable-member" onclick="visitFriend('Marcus', 'very_high')" role="button" tabindex="0">
                                             <span class="member-name"><i class="fa-solid fa-user"></i> Marcus <small class="visit-hint">Visit Island</small></span>
                                             <div class="member-stats">
                                                 <span class="aura-indicator aura-very-high" title="Toxic Red Aura"></span>
@@ -440,7 +440,7 @@
                                         <div class="event-qty-selector">
                                             <span>Trees to Plant:</span>
                                             <div class="qty-control">
-                                                <input type="number" id="event-tree-qty" min="1" max="10000" value="1" oninput="updateContributeButtonText()">
+                                                <input type="number" id="event-tree-qty" min="1" max="10000" value="1" oninput="updateContributeButtonText()" aria-label="Number of trees to contribute to global goal">
                                                 <button class="qty-preset-btn" onclick="setEventTreeQty(1)">1</button>
                                                 <button class="qty-preset-btn" onclick="setEventTreeQty(10)">10</button>
                                                 <button class="qty-preset-btn" onclick="setEventTreeQty(100)">100</button>
@@ -500,7 +500,7 @@
                                     </div>
                                 </div>
                                 <div class="chat-input-row">
-                                    <input type="text" id="ai-chat-input" placeholder="Ask about emissions, recipes, travel, challenges...">
+                                    <input type="text" id="ai-chat-input" placeholder="Ask about emissions, recipes, travel, challenges..." aria-label="AI companion message input">
                                     <button class="btn-chat-send" onclick="sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
                                 </div>
                             </div>

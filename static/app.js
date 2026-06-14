@@ -2421,21 +2421,21 @@ function renderTribesTab() {
                                 <span>32 kg saved</span>
                             </div>
                         </div>
-                        <div class="member-item clickable-member" onclick="visitFriend('Sarah', 'high')">
+                        <div class="member-item clickable-member" onclick="visitFriend('Sarah', 'high')" role="button" tabindex="0">
                             <span class="member-name"><i class="fa-solid fa-user"></i> Sarah <small class="visit-hint">Visit Island</small></span>
                             <div class="member-stats">
                                 <span class="aura-indicator aura-high" title="Orange Smog Aura"></span>
                                 <span>18 kg saved</span>
                             </div>
                         </div>
-                        <div class="member-item clickable-member" onclick="visitFriend('David', 'low')">
+                        <div class="member-item clickable-member" onclick="visitFriend('David', 'low')" role="button" tabindex="0">
                             <span class="member-name"><i class="fa-solid fa-user"></i> David <small class="visit-hint">Visit Island</small></span>
                             <div class="member-stats">
                                 <span class="aura-indicator aura-low" title="Blue Sky Aura"></span>
                                 <span>24 kg saved</span>
                             </div>
                         </div>
-                        <div class="member-item clickable-member" onclick="visitFriend('Marcus', 'very_high')">
+                        <div class="member-item clickable-member" onclick="visitFriend('Marcus', 'very_high')" role="button" tabindex="0">
                             <span class="member-name"><i class="fa-solid fa-user"></i> Marcus <small class="visit-hint">Visit Island</small></span>
                             <div class="member-stats">
                                 <span class="aura-indicator aura-very-high" title="Toxic Red Aura"></span>
@@ -2449,7 +2449,7 @@ function renderTribesTab() {
                     <h4><i class="fa-solid fa-comments"></i> Tribe Chat</h4>
                     <div class="chat-messages" id="tribe-chat-messages"></div>
                     <div class="chat-input-area">
-                        <input type="text" id="tribe-chat-input" placeholder="Type a message to your tribe...">
+                        <input type="text" id="tribe-chat-input" placeholder="Type a message to your tribe..." aria-label="Tribe chat message input">
                         <button class="btn-chat-send" onclick="sendTribeMessage()"><i class="fa-solid fa-paper-plane"></i></button>
                     </div>
                 </div>
@@ -2653,7 +2653,7 @@ function renderActiveTribeUI(container, tribe, members) {
         const savings = Math.max(0, 150 - (m.carbonScore || 150));
         
         return `
-            <div class="member-item ${isSelf ? '' : 'clickable-member'}" ${isSelf ? '' : `onclick="visitRealUser('${m.uid}', '${escapeHTML(m.displayName)}')"`}>
+            <div class="member-item ${isSelf ? '' : 'clickable-member'}" ${isSelf ? '' : `onclick="visitRealUser('${m.uid}', '${escapeHTML(m.displayName)}')" role="button" tabindex="0"`}>
                 <span class="member-name">
                     <i class="fa-solid ${m.uid === tribe.creatorUid ? 'fa-user-crown' : 'fa-user'}"></i>
                     ${escapeHTML(m.displayName)} ${isSelf ? '(You)' : '<small class="visit-hint">Visit Island</small>'}
@@ -2702,7 +2702,7 @@ function renderActiveTribeUI(container, tribe, members) {
                 <h4><i class="fa-solid fa-comments"></i> Tribe Chat</h4>
                 <div class="chat-messages" id="tribe-chat-messages"></div>
                 <div class="chat-input-area">
-                    <input type="text" id="tribe-chat-input" placeholder="Type a message to your tribe...">
+                    <input type="text" id="tribe-chat-input" placeholder="Type a message to your tribe..." aria-label="Tribe chat message input">
                     <button class="btn-chat-send" onclick="sendTribeMessage()"><i class="fa-solid fa-paper-plane"></i></button>
                 </div>
             </div>
